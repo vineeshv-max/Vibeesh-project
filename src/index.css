@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-main: #0a0b0e;
+    --bg-card: #13151b;
+    --bg-elevated: #1a1d26;
+    --bg-highlight: #232733;
+    --accent-emerald: #10b981;
+    --accent-purple: #8b5cf6;
+    --accent-gradient: linear-gradient(135deg, #10b981 0%, #6366f1 50%, #8b5cf6 100%);
+  }
+
+  body {
+    background-color: #0a0b0e;
+    color: #f3f4f6;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0d0f14;
+}
+::-webkit-scrollbar-thumb {
+  background: #262a36;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #383e50;
+}
+
+/* Range input styling for audio progress & volume */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #2a2e3d;
+  border-radius: 9999px;
+  cursor: pointer;
+  height: 4px;
+  transition: height 0.15s ease;
+}
+
+input[type="range"]:hover {
+  height: 6px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.15s ease;
+}
+
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+  background: #10b981;
+}
+
+/* Audio visualizer bar animations */
+@keyframes barBounce1 {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+@keyframes barBounce2 {
+  0%, 100% { height: 16px; }
+  50% { height: 6px; }
+}
+@keyframes barBounce3 {
+  0%, 100% { height: 8px; }
+  50% { height: 22px; }
+}
+@keyframes barBounce4 {
+  0%, 100% { height: 18px; }
+  50% { height: 5px; }
+}
+
+.animate-bar-1 { animation: barBounce1 0.8s ease-in-out infinite; }
+.animate-bar-2 { animation: barBounce2 0.7s ease-in-out infinite 0.15s; }
+.animate-bar-3 { animation: barBounce3 0.9s ease-in-out infinite 0.3s; }
+.animate-bar-4 { animation: barBounce4 0.75s ease-in-out infinite 0.1s; }
+
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(19, 21, 27, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-nav {
+  background: rgba(10, 11, 14, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Gradient text */
+.text-gradient {
+  background: linear-gradient(135deg, #10b981 0%, #818cf8 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-purple {
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
