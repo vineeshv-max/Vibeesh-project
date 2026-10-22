@@ -18,8 +18,10 @@ interface LibraryContextType {
   isPreferredLanguage: (languageCode: string) => boolean;
 }
 
-const STORAGE_KEY = 'vibeesh_library_data_v1';
-const LEGACY_STORAGE_KEY = 'melodyverse_library_data_v1';
+import { DEFAULT_PLAYLISTS } from '../data/defaultPlaylists';
+
+const STORAGE_KEY = 'vibeesh_library_data_v2';
+const LEGACY_STORAGE_KEY = 'vibeesh_library_data_v1';
 
 function getInitialLibraryData() {
   try {
@@ -30,27 +32,6 @@ function getInitialLibraryData() {
   }
   return null;
 }
-
-const DEFAULT_PLAYLISTS: Playlist[] = [
-  {
-    id: 'pl-favorites',
-    name: 'Top Picks & Favorites',
-    description: 'Your favorite tracks, curated and ready to replay anytime.',
-    coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80',
-    tracks: [],
-    createdAt: new Date().toISOString(),
-    isCustom: false,
-  },
-  {
-    id: 'pl-chill',
-    name: 'Late Night Chill',
-    description: 'Atmospheric melodies and mellow grooves for focus and unwinding.',
-    coverUrl: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=600&auto=format&fit=crop&q=80',
-    tracks: [],
-    createdAt: new Date().toISOString(),
-    isCustom: false,
-  },
-];
 
 const LibraryContext = createContext<LibraryContextType | undefined>(undefined);
 
@@ -65,7 +46,9 @@ export const LibraryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [playlists, setPlaylists] = useState<Playlist[]>(() => {
     const data = getInitialLibraryData();
     if (data?.playlists && data.playlists.length > 0) {
-      return data.playlists;
+      const existingIds = new Set(data.playlists.map((p: Playlist) => p.id));
+      const missingDefaults = DEFAULT_PLAYLISTS.filter((p) => !existingIds.has(p.id));
+      return [...missingDefaults, ...data.playlists];
     }
     return DEFAULT_PLAYLISTS;
   });

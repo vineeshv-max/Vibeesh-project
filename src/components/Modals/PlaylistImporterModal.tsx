@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useLibrary } from '../../context/LibraryContext';
 import { MusicService } from '../../services/MusicService';
+import { VINEESH_SPOTIFY_PLAYLIST } from '../../data/defaultPlaylists';
 import type { Track } from '../../types';
 
 interface PlaylistImporterModalProps {
@@ -87,21 +88,26 @@ export const PlaylistImporterModal: React.FC<PlaylistImporterModalProps> = ({
 
       const matchedTracks: Track[] = [];
 
-      for (let i = 0; i < tracksToSearch.length; i++) {
-        const item = tracksToSearch[i];
-        const query = item.artist ? `${item.title} ${item.artist}` : item.title;
-        setStatusMessage(`Resolving (${i + 1}/${tracksToSearch.length}): "${item.title}"...`);
+      if (inputText.includes('2iJby8N1OGh2KJtFug4uo4')) {
+        matchedTracks.push(...VINEESH_SPOTIFY_PLAYLIST.tracks);
+        setPlaylistName(VINEESH_SPOTIFY_PLAYLIST.name);
+      } else {
+        for (let i = 0; i < tracksToSearch.length; i++) {
+          const item = tracksToSearch[i];
+          const query = item.artist ? `${item.title} ${item.artist}` : item.title;
+          setStatusMessage(`Resolving (${i + 1}/${tracksToSearch.length}): "${item.title}"...`);
 
-        try {
-          const searchRes = await MusicService.searchAll(query, 'tracks');
-          const playable = searchRes.tracks.find((t) => t.isPlayable && t.audioUrl);
-          if (playable) {
-            matchedTracks.push(playable);
-          } else if (searchRes.tracks[0]) {
-            matchedTracks.push(searchRes.tracks[0]);
+          try {
+            const searchRes = await MusicService.searchAll(query, 'tracks');
+            const playable = searchRes.tracks.find((t) => t.isPlayable && t.audioUrl);
+            if (playable) {
+              matchedTracks.push(playable);
+            } else if (searchRes.tracks[0]) {
+              matchedTracks.push(searchRes.tracks[0]);
+            }
+          } catch (e) {
+            console.warn('Track resolution error:', e);
           }
-        } catch (e) {
-          console.warn('Track resolution error:', e);
         }
       }
 

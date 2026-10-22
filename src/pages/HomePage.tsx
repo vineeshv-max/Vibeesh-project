@@ -21,6 +21,7 @@ import { LanguageCard } from '../components/Cards/LanguageCard';
 import { SkeletonCard } from '../components/Common/SkeletonCard';
 import { ErrorMessage } from '../components/Common/ErrorMessage';
 import { LANGUAGES } from '../data/languages';
+import { VINEESH_SPOTIFY_PLAYLIST } from '../data/defaultPlaylists';
 
 interface OutletContextType {
   onOpenAddToPlaylist: (track: Track) => void;
@@ -185,6 +186,65 @@ export const HomePage: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
           {LANGUAGES.slice(0, 6).map((lang) => (
             <LanguageCard key={lang.code} language={lang} />
+          ))}
+        </div>
+      </section>
+
+      {/* Featured Spotify Playlist (Vineesh V) */}
+      <section className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-[#131922] to-[#0f1118] border border-emerald-500/20 shadow-xl">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+          <div className="flex items-center gap-3.5">
+            <img
+              src={VINEESH_SPOTIFY_PLAYLIST.coverUrl}
+              alt={VINEESH_SPOTIFY_PLAYLIST.name}
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shadow-lg border border-white/10 shrink-0"
+            />
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
+                  Spotify Playlist
+                </span>
+                <span className="text-xs text-zinc-400">8 Tracks</span>
+              </div>
+              <h2 className="text-lg sm:text-2xl font-extrabold text-white">
+                {VINEESH_SPOTIFY_PLAYLIST.name}
+              </h2>
+              <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">
+                {VINEESH_SPOTIFY_PLAYLIST.description}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() =>
+                playTrack(VINEESH_SPOTIFY_PLAYLIST.tracks[0], VINEESH_SPOTIFY_PLAYLIST.tracks)
+              }
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs sm:text-sm shadow-xl shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95"
+            >
+              <Play className="w-4 h-4 fill-current ml-0.5" />
+              <span>Play All</span>
+            </button>
+            <button
+              onClick={() =>
+                navigate('/library?tab=playlists&playlistId=pl-vineesh-spotify')
+              }
+              className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white/5 hover:bg-white/10 text-white font-semibold text-xs sm:text-sm transition-colors border border-white/10"
+            >
+              <span>Open Playlist</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-2.5 sm:gap-3">
+          {VINEESH_SPOTIFY_PLAYLIST.tracks.map((track) => (
+            <TrackCard
+              key={track.id}
+              track={track}
+              queueContext={VINEESH_SPOTIFY_PLAYLIST.tracks}
+              onOpenAddToPlaylist={onOpenAddToPlaylist}
+            />
           ))}
         </div>
       </section>
