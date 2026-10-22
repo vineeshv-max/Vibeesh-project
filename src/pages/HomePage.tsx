@@ -74,7 +74,13 @@ export const HomePage: React.FC = () => {
     if (currentTrack?.id === featured.id) {
       togglePlay();
     } else {
-      playTrack(featured, trending);
+      const queueToUse =
+        featured.provider === 'jamendo'
+          ? jamendoIndie
+          : featured.provider === 'archive'
+          ? archiveGems
+          : trending;
+      playTrack(featured, queueToUse.length > 0 ? queueToUse : [featured]);
     }
   };
 
@@ -122,7 +128,11 @@ export const HomePage: React.FC = () => {
                   ) : (
                     <Play className="w-5 h-5 fill-current ml-0.5" />
                   )}
-                  {isFeaturedPlaying ? 'Pause Featured' : `Play: ${featured.title}`}
+                  {isFeaturedPlaying
+                    ? 'Pause Featured'
+                    : featured.sourceType === 'full'
+                    ? `Play Full Song: ${featured.title}`
+                    : `Play: ${featured.title}`}
                 </button>
 
                 <button

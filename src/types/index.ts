@@ -1,6 +1,6 @@
 export type TrackSourceType = 'preview' | 'full' | 'archive' | 'podcast' | 'metadata_only';
 
-export type ProviderType = 'itunes' | 'archive' | 'jamendo' | 'musicbrainz' | 'podcast';
+export type ProviderType = 'itunes' | 'archive' | 'jamendo' | 'musicbrainz' | 'podcast' | 'lrclib';
 
 export interface Track {
   id: string;
@@ -20,6 +20,8 @@ export interface Track {
   genre?: string;
   description?: string;
   originalUrl?: string;
+  fullDuration?: number;
+  licenseUrl?: string;
 }
 
 export interface Artist {

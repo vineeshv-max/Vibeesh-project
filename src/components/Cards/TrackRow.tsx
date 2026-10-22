@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Pause, Heart, MoreVertical, Plus, ListPlus, Radio } from 'lucide-react';
+import { Play, Pause, Heart, MoreVertical, Plus, ListPlus, Radio, ExternalLink } from 'lucide-react';
 import type { Track } from '../../types';
 import { usePlayer } from '../../context/PlayerContext';
 import { useLibrary } from '../../context/LibraryContext';
@@ -157,8 +157,13 @@ export const TrackRow: React.FC<TrackRowProps> = ({
       </button>
 
       {/* Duration */}
-      <span className="text-xs text-zinc-500 font-mono w-10 text-right shrink-0">
-        {formatDuration(track.duration || 30)}
+      <span
+        className={`text-xs font-mono w-12 text-right shrink-0 ${
+          track.sourceType === 'preview' ? 'text-blue-400/80 font-medium' : 'text-zinc-500'
+        }`}
+        title={track.sourceType === 'preview' ? '30-second official preview clip' : undefined}
+      >
+        {track.sourceType === 'preview' ? '0:30' : formatDuration(track.duration || 180)}
       </span>
 
       {/* More Options */}
@@ -213,6 +218,21 @@ export const TrackRow: React.FC<TrackRowProps> = ({
                 <Radio className="w-3.5 h-3.5" />
                 Go to Artist
               </button>
+              {track.originalUrl && (
+                <a
+                  href={track.originalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-zinc-300 hover:text-blue-400 hover:bg-blue-500/10 transition-colors text-left"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  {track.sourceType === 'preview' ? 'Full on Apple Music' : 'Open on Platform'}
+                </a>
+              )}
             </div>
           </>
         )}

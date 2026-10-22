@@ -46,6 +46,8 @@ export const SearchPage: React.FC = () => {
   const [podcasts, setPodcasts] = useState<Podcast[]>([]);
   const [archiveTracks, setArchiveTracks] = useState<Track[]>([]);
   const [mbRecordings, setMbRecordings] = useState<Track[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
 
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -56,6 +58,17 @@ export const SearchPage: React.FC = () => {
       setQuery(q);
     }
   }, [searchParams]);
+
+  // Fetch search suggestions
+  useEffect(() => {
+    if (query.trim().length > 1) {
+      MusicService.getSearchSuggestions(query.trim(), 5).then((items) => {
+        setSuggestions(items);
+      });
+    } else {
+      setSuggestions([]);
+    }
+  }, [query]);
 
   // Debounced search effect
   useEffect(() => {
@@ -130,7 +143,7 @@ export const SearchPage: React.FC = () => {
     if (playable) {
       playTrack(playable);
     } else {
-      alert(`Could not find an immediate preview stream for "${mbTrack.title}". Try searching with artist name.`);
+      alert(`Could not find an immediate audio stream for "${mbTrack.title}". Try searching with artist name.`);
     }
   };
 
@@ -164,7 +177,11 @@ export const SearchPage: React.FC = () => {
             type="text"
             autoFocus
             value={query}
-            onChange={(e) => handleQueryChange(e.target.value)}
+            onChange={(e) => {
+              handleQueryChange(e.target.value);
+              setShowSuggestions(true);
+            }}
+            onFocus={() => setShowSuggestions(true)}
             placeholder="Search tracks, artists, albums, podcasts, or languages..."
             className="w-full pl-12 pr-12 py-3.5 rounded-2xl bg-[#141620] border border-white/10 text-white placeholder-zinc-500 text-sm sm:text-base focus:outline-none focus:border-emerald-500/60 focus:bg-[#181a26] transition-all shadow-lg"
           />
@@ -176,6 +193,32 @@ export const SearchPage: React.FC = () => {
             >
               <X className="w-5 h-5" />
             </button>
+          )}
+
+          {/* Autocomplete Suggestions Dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <>
+              <div
+                className="fixed inset-0 z-20"
+                onClick={() => setShowSuggestions(false)}
+              />
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#12141e] border border-white/10 rounded-2xl shadow-2xl z-30 overflow-hidden py-1.5 divide-y divide-white/5">
+                {suggestions.map((s, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      handleQueryChange(s);
+                      setShowSuggestions(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs sm:text-sm text-zinc-200 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                  >
+                    <SearchIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="truncate">{s}</span>
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
@@ -375,7 +418,7 @@ export const SearchPage: React.FC = () => {
                     MusicBrainz Catalog Entries (Metadata Only)
                   </h3>
                   <p className="text-xs text-zinc-400">
-                    Official encyclopedic recordings. Click "Find Audio Preview" to search for a playable stream.
+                    Official encyclopedic metadata. Click "Find Playable Audio" to search for an authorized full or preview stream.
                   </p>
                 </div>
               </div>
@@ -398,7 +441,7 @@ export const SearchPage: React.FC = () => {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black font-semibold text-xs transition-colors shrink-0"
                     >
                       <Play className="w-3 h-3 fill-current" />
-                      Find Audio Preview
+                      Find Playable Audio
                     </button>
                   </div>
                 ))}

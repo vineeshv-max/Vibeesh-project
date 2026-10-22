@@ -15,12 +15,19 @@ import {
   AlertCircle,
   X,
   Loader2,
+  ExternalLink,
 } from 'lucide-react';
+import { YouTubeIcon } from '../Common/YouTubeIcon';
 import { usePlayer } from '../../context/PlayerContext';
 import { useLibrary } from '../../context/LibraryContext';
 import { Badge } from '../Common/Badge';
+import type { Track } from '../../types';
 
-export const PersistentPlayer: React.FC = () => {
+interface PersistentPlayerProps {
+  onOpenYouTubeEmbed?: (track: Track) => void;
+}
+
+export const PersistentPlayer: React.FC<PersistentPlayerProps> = ({ onOpenYouTubeEmbed }) => {
   const {
     currentTrack,
     isPlaying,
@@ -114,10 +121,36 @@ export const PersistentPlayer: React.FC = () => {
             <p className="text-[11px] sm:text-xs text-zinc-400 truncate" title={currentTrack.artist}>
               {currentTrack.artist}
             </p>
-            <div className="mt-0.5 hidden sm:block">
+            <div className="mt-0.5 hidden sm:flex items-center gap-1.5 flex-wrap">
               <Badge sourceType={currentTrack.sourceType} isPlayable={currentTrack.isPlayable} />
+              {currentTrack.sourceType === 'preview' && currentTrack.originalUrl && (
+                <a
+                  href={currentTrack.originalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 hover:underline transition-colors font-medium"
+                  title="Listen to the full song on Apple Music / official platform"
+                >
+                  <span>Full Song</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              )}
             </div>
           </div>
+
+          {onOpenYouTubeEmbed && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenYouTubeEmbed(currentTrack);
+              }}
+              className="p-1.5 rounded-full hover:bg-white/10 text-zinc-400 hover:text-red-400 transition-colors shrink-0 hidden sm:block"
+              title="Watch Official YouTube Video"
+            >
+              <YouTubeIcon className="w-4 h-4 text-red-500" />
+            </button>
+          )}
 
           <button
             onClick={() => toggleLike(currentTrack)}

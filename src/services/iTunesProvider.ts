@@ -63,24 +63,34 @@ export class ITunesProvider {
 
       return results
         .filter((item) => item.trackName && item.artistName)
-        .map((item) => ({
-          id: `itunes-${item.trackId}`,
-          title: item.trackName,
-          artist: item.artistName,
-          artistId: item.artistId?.toString(),
-          album: item.collectionName || 'Single',
-          albumId: item.collectionId?.toString(),
-          duration: item.trackTimeMillis ? Math.round(item.trackTimeMillis / 1000) : 30,
-          coverUrl: getHighResArtwork(item.artworkUrl100),
-          audioUrl: item.previewUrl,
-          isPlayable: Boolean(item.previewUrl),
-          sourceType: 'preview',
-          provider: 'itunes',
-          releaseDate: item.releaseDate ? item.releaseDate.split('T')[0] : undefined,
-          genre: item.primaryGenreName,
-          originalUrl: item.trackViewUrl,
-          language,
-        }));
+        .map((item) => {
+          const originalDuration = item.trackTimeMillis ? Math.round(item.trackTimeMillis / 1000) : undefined;
+          const officialUrl =
+            item.trackViewUrl ||
+            `https://music.apple.com/search?term=${encodeURIComponent(`${item.trackName} ${item.artistName}`)}`;
+
+          return {
+            id: `itunes-${item.trackId}`,
+            title: item.trackName,
+            artist: item.artistName,
+            artistId: item.artistId?.toString(),
+            album: item.collectionName || 'Single',
+            albumId: item.collectionId?.toString(),
+            // Actual playable stream duration for commercial iTunes tracks is 30 seconds
+            duration: 30,
+            fullDuration: originalDuration,
+            coverUrl: getHighResArtwork(item.artworkUrl100),
+            audioUrl: item.previewUrl,
+            isPlayable: Boolean(item.previewUrl),
+            sourceType: 'preview' as const,
+            provider: 'itunes' as const,
+            releaseDate: item.releaseDate ? item.releaseDate.split('T')[0] : undefined,
+            genre: item.primaryGenreName,
+            originalUrl: officialUrl,
+            description: 'Official 30-second preview clip. Full song available on Apple Music.',
+            language,
+          };
+        });
     } catch (err) {
       console.warn('iTunes search error:', err);
       return [];
@@ -116,7 +126,7 @@ export class ITunesProvider {
         description: item.description || item.shortDescription || 'Audio discussions, deep dives, and expert commentary.',
         category: item.primaryGenreName || 'General',
         episodes: [],
-        provider: 'itunes',
+        provider: 'itunes' as const,
       }));
     } catch (err) {
       console.warn('iTunes podcast search error:', err);
@@ -167,21 +177,54 @@ export class ITunesProvider {
       const data = await res.json();
       const items: ITunesTrackResult[] = (data.results || []).slice(1);
 
-      return items.map((item) => ({
-        id: `itunes-${item.trackId}`,
-        title: item.trackName,
-        artist: item.artistName,
-        album: item.collectionName || 'Album',
-        duration: item.trackTimeMillis ? Math.round(item.trackTimeMillis / 1000) : 30,
-        coverUrl: getHighResArtwork(item.artworkUrl100),
-        audioUrl: item.previewUrl,
-        isPlayable: Boolean(item.previewUrl),
-        sourceType: 'preview',
-        provider: 'itunes',
-        genre: item.primaryGenreName,
-      }));
+      return items.map((item) => {
+        const originalDuration = item.trackTimeMillis ? Math.round(item.trackTimeMillis / 1000) : undefined;
+        const officialUrl =
+          item.trackViewUrl ||
+          `https://music.apple.com/search?term=${encodeURIComponent(`${item.trackName} ${item.artistName}`)}`;
+
+        return {
+          id: `itunes-${item.trackId}`,
+          title: item.trackName,
+          artist: item.artistName,
+          album: item.collectionName || 'Album',
+          duration: 30,
+          fullDuration: originalDuration,
+          coverUrl: getHighResArtwork(item.artworkUrl100),
+          audioUrl: item.previewUrl,
+          isPlayable: Boolean(item.previewUrl),
+          sourceType: 'preview' as const,
+          provider: 'itunes' as const,
+          genre: item.primaryGenreName,
+          originalUrl: officialUrl,
+          description: 'Official 30-second preview clip. Full song available on Apple Music.',
+        };
+      });
     } catch (err) {
       console.warn('iTunes album tracks error:', err);
+      return [];
+    }
+  }
+
+  static async getSearchSuggestions(query: string, limit = 6): Promise<string[]> {
+    if (!query.trim()) return [];
+    try {
+      const params = new URLSearchParams({
+        term: query.trim(),
+        media: 'music',
+        entity: 'song',
+        limit: limit.toString(),
+      });
+      const res = await fetch(`${this.BASE_URL}?${params.toString()}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      const suggestions = new Set<string>();
+      for (const item of data.results || []) {
+        if (item.trackName) suggestions.add(item.trackName);
+        if (item.artistName) suggestions.add(item.artistName);
+      }
+      return Array.from(suggestions).slice(0, limit);
+    } catch {
       return [];
     }
   }

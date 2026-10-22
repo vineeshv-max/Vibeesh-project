@@ -3,6 +3,7 @@ import { ITunesProvider } from './iTunesProvider';
 import { ArchiveOrgProvider } from './ArchiveOrgProvider';
 import { JamendoProvider } from './JamendoProvider';
 import { MusicBrainzProvider } from './MusicBrainzProvider';
+import { LrcLibProvider, type LyricsResponse } from './LrcLibProvider';
 import { LANGUAGES } from '../data/languages';
 
 interface CacheEntry<T> {
@@ -44,11 +45,12 @@ export class MusicService {
     const [trending, archiveGems, jamendoIndie, podcasts] = await Promise.all([
       ITunesProvider.getTrendingTracks('top hits 2026', 12),
       ArchiveOrgProvider.getFeaturedArchiveTracks(),
-      JamendoProvider.getFeaturedTracks(8),
+      JamendoProvider.getFeaturedTracks(12),
       ITunesProvider.searchPodcasts('technology music story', 6),
     ]);
 
-    const featured = trending[0] || archiveGems[0] || null;
+    // Prioritize full-length audio tracks for the spotlight feature so playback doesn't stop after 30s
+    const featured = jamendoIndie[0] || archiveGems[0] || trending[0] || null;
 
     const quickLanguages = LANGUAGES.slice(0, 8).map((l) => ({
       code: l.code,
@@ -79,20 +81,32 @@ export class MusicService {
     const cached = this.getFromCache<Track[]>(cacheKey);
     if (cached) return cached;
 
-    const tracks = await ITunesProvider.searchTracks(query, limit, lang?.name);
+    const [itunesTracks, jamendoTracks] = await Promise.all([
+      ITunesProvider.searchTracks(query, limit, lang?.name),
+      JamendoProvider.searchTracks(lang?.name || query, 6),
+    ]);
+
+    // Combine full-length tracks with regional preview tracks
+    const tracks = [...jamendoTracks, ...itunesTracks];
     this.setCache(cacheKey, tracks);
     return tracks;
   }
 
-  // Trending Tracks
+  // Trending Tracks (combines full-length indie hits with popular chart previews)
   static async getTrendingTracks(genre = 'pop', limit = 24): Promise<Track[]> {
     const cacheKey = `trending_${genre}_${limit}`;
     const cached = this.getFromCache<Track[]>(cacheKey);
     if (cached) return cached;
 
-    const tracks = await ITunesProvider.searchTracks(`${genre} hits chart`, limit);
-    this.setCache(cacheKey, tracks);
-    return tracks;
+    const halfLimit = Math.ceil(limit / 2);
+    const [jamendoTracks, itunesTracks] = await Promise.all([
+      JamendoProvider.getTracksByGenre(genre, halfLimit),
+      ITunesProvider.searchTracks(`${genre} hits chart`, halfLimit),
+    ]);
+
+    const combined = [...jamendoTracks, ...itunesTracks];
+    this.setCache(cacheKey, combined);
+    return combined;
   }
 
   // Real New Releases
@@ -101,12 +115,13 @@ export class MusicService {
     const cached = this.getFromCache<Track[]>(cacheKey);
     if (cached) return cached;
 
-    const [recentSingles, jamendoNew] = await Promise.all([
-      ITunesProvider.searchTracks('new release 2025 2026 single', limit),
-      JamendoProvider.getFeaturedTracks(limit / 2),
+    const halfLimit = Math.ceil(limit / 2);
+    const [jamendoNew, recentSingles] = await Promise.all([
+      JamendoProvider.getNewReleases(halfLimit),
+      ITunesProvider.searchTracks('new release 2025 2026 single', halfLimit),
     ]);
 
-    const combined = [...recentSingles, ...jamendoNew];
+    const combined = [...jamendoNew, ...recentSingles];
     this.setCache(cacheKey, combined);
     return combined;
   }
@@ -156,10 +171,11 @@ export class MusicService {
     let mbRecordings: Track[] = [];
 
     if (filter === 'all' || filter === 'tracks') {
-      const itunesPromise = ITunesProvider.searchTracks(query, 16);
-      const jamendoPromise = JamendoProvider.searchTracks(query, 6);
-      const [itunesRes, jamendoRes] = await Promise.all([itunesPromise, jamendoPromise]);
-      tracks = [...itunesRes, ...jamendoRes];
+      const jamendoPromise = JamendoProvider.searchTracks(query, 12);
+      const itunesPromise = ITunesProvider.searchTracks(query, 12);
+      const [jamendoRes, itunesRes] = await Promise.all([jamendoPromise, itunesPromise]);
+      // Place full-length authorized Jamendo streams first, followed by previews
+      tracks = [...jamendoRes, ...itunesRes];
     }
 
     if (filter === 'all' || filter === 'podcasts') {
@@ -167,7 +183,11 @@ export class MusicService {
     }
 
     if (filter === 'all' || filter === 'cc') {
-      archiveTracks = await ArchiveOrgProvider.searchArchiveMusic(query, 8);
+      const [archiveRes, jamendoCCRes] = await Promise.all([
+        ArchiveOrgProvider.searchArchiveMusic(query, 8),
+        JamendoProvider.searchTracks(query, 8),
+      ]);
+      archiveTracks = [...jamendoCCRes, ...archiveRes];
     }
 
     if (filter === 'all' || filter === 'tracks') {
@@ -185,21 +205,27 @@ export class MusicService {
     const cached = this.getFromCache<Artist>(cacheKey);
     if (cached) return cached;
 
-    const [tracks, mbArtist] = await Promise.all([
+    const [jamendoTracks, itunesTracks, mbArtist] = await Promise.all([
+      JamendoProvider.searchTracks(artistName, 10),
       ITunesProvider.searchTracks(artistName, 15),
       MusicBrainzProvider.searchArtist(artistName),
     ]);
 
-    const artistTrack = tracks[0];
-    const image = artistTrack?.coverUrl || 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80';
+    const combinedTracks = [...jamendoTracks, ...itunesTracks];
+    const artistTrack = combinedTracks[0];
+    const image =
+      artistTrack?.coverUrl ||
+      'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80';
 
     const artistData: Artist = {
       id: artistTrack?.artistId || `artist-${artistName.toLowerCase().replace(/\s+/g, '-')}`,
       name: artistName,
       genre: artistTrack?.genre || mbArtist?.genre || 'Popular Artist',
       image,
-      bio: mbArtist?.bio || `${artistName} is an accomplished artist featured across global charts with popular tracks and albums on VIBEESH.`,
-      topTracks: tracks,
+      bio:
+        mbArtist?.bio ||
+        `${artistName} is an accomplished artist featured across global charts with popular tracks and albums on VIBEESH.`,
+      topTracks: combinedTracks,
     };
 
     this.setCache(cacheKey, artistData);
@@ -209,9 +235,25 @@ export class MusicService {
   // Find Playable Alternative for metadata-only tracks
   static async findPlayableAlternative(track: Track): Promise<Track | null> {
     const query = `${track.title} ${track.artist}`;
-    const results = await ITunesProvider.searchTracks(query, 3);
+    // First try full-length track on Jamendo
+    const jamendoResults = await JamendoProvider.searchTracks(query, 4);
+    const jamendoPlayable = jamendoResults.find((t) => t.isPlayable && t.audioUrl);
+    if (jamendoPlayable) return jamendoPlayable;
+
+    // Fall back to preview track on iTunes
+    const results = await ITunesProvider.searchTracks(query, 4);
     const playable = results.find((t) => t.isPlayable && t.audioUrl);
     return playable || null;
+  }
+
+  // Get Lyrics via LRCLIB
+  static async getLyrics(trackName: string, artistName: string, albumName?: string, duration?: number): Promise<LyricsResponse | null> {
+    return LrcLibProvider.getLyrics(trackName, artistName, albumName, duration);
+  }
+
+  // Get Search Suggestions
+  static async getSearchSuggestions(query: string, limit = 6): Promise<string[]> {
+    return ITunesProvider.getSearchSuggestions(query, limit);
   }
 
   // Status of Connected Providers
@@ -219,14 +261,14 @@ export class MusicService {
     const jamendoKey = JamendoProvider.getClientId();
     return [
       {
-        id: 'itunes',
-        name: 'Apple Music / iTunes API',
-        description: 'Instant preview audio streams, high-res covers, multilingual songs, and real podcast feeds.',
+        id: 'jamendo',
+        name: 'Jamendo Music API',
+        description: 'Independent music licensed under Creative Commons with legal full-length streaming.',
         status: 'active',
         isAudioPlayable: true,
-        requiresKey: false,
-        hasKey: true,
-        badgeText: 'Active • Real Previews & Podcasts',
+        requiresKey: true,
+        hasKey: Boolean(jamendoKey),
+        badgeText: 'Active • Full Length (Indie CC)',
       },
       {
         id: 'archive',
@@ -239,14 +281,24 @@ export class MusicService {
         badgeText: 'Active • Full Length (CC / Public Domain)',
       },
       {
-        id: 'jamendo',
-        name: 'Jamendo Music API',
-        description: 'Independent music licensed under Creative Commons with full-length streaming.',
-        status: jamendoKey ? 'active' : 'configured',
+        id: 'itunes',
+        name: 'Apple Music / iTunes API',
+        description: 'Instant 30-second preview audio streams, high-res covers, multilingual songs, and real podcast feeds.',
+        status: 'active',
         isAudioPlayable: true,
-        requiresKey: true,
-        hasKey: Boolean(jamendoKey),
-        badgeText: jamendoKey ? 'Active • Full Length (Indie CC)' : 'Needs Client ID',
+        requiresKey: false,
+        hasKey: true,
+        badgeText: 'Active • 30s Previews & Podcasts',
+      },
+      {
+        id: 'lrclib',
+        name: 'LRCLIB Public Lyrics API',
+        description: 'Crowd-sourced open lyrics database providing plain and timestamp-synchronized (.lrc) lyrics.',
+        status: 'active',
+        isAudioPlayable: false,
+        requiresKey: false,
+        hasKey: true,
+        badgeText: 'Active • Synced & Plain Lyrics',
       },
       {
         id: 'musicbrainz',

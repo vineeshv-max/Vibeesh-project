@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Pause, Heart, MoreVertical, Plus, ListPlus, Radio } from 'lucide-react';
+import { Play, Pause, Heart, MoreVertical, Plus, ListPlus, Radio, ExternalLink } from 'lucide-react';
 import type { Track } from '../../types';
 import { usePlayer } from '../../context/PlayerContext';
 import { useLibrary } from '../../context/LibraryContext';
@@ -202,6 +202,21 @@ export const TrackCard: React.FC<TrackCardProps> = ({
                     <Radio className="w-3.5 h-3.5" />
                     Go to Artist
                   </button>
+                  {track.originalUrl && (
+                    <a
+                      href={track.originalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-zinc-300 hover:text-blue-400 hover:bg-blue-500/10 transition-colors text-left"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      {track.sourceType === 'preview' ? 'Full on Apple Music' : 'Open on Platform'}
+                    </a>
+                  )}
                 </div>
               </>
             )}

@@ -14,7 +14,7 @@ export const Badge: React.FC<BadgeProps> = ({ sourceType, isPlayable, className 
         className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-zinc-800 text-zinc-400 border border-zinc-700/50 ${className}`}
         title="Metadata catalog item. Audio stream not authorized from this provider."
       >
-        Metadata Only
+        Catalog Only
       </span>
     );
   }
@@ -24,7 +24,7 @@ export const Badge: React.FC<BadgeProps> = ({ sourceType, isPlayable, className 
       return (
         <span
           className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 ${className}`}
-          title="Full length authorized audio track under Creative Commons license."
+          title="Full-length authorized audio track under Creative Commons license via Jamendo."
         >
           Full Track (CC)
         </span>
@@ -33,9 +33,9 @@ export const Badge: React.FC<BadgeProps> = ({ sourceType, isPlayable, className 
       return (
         <span
           className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 ${className}`}
-          title="Preserved public domain / archive audio recording."
+          title="Preserved full-length public domain / archive audio recording."
         >
-          Archive Stream
+          Full Track (Archive)
         </span>
       );
     case 'podcast':
@@ -52,9 +52,9 @@ export const Badge: React.FC<BadgeProps> = ({ sourceType, isPlayable, className 
       return (
         <span
           className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30 ${className}`}
-          title="Official high-quality preview stream."
+          title="Official 30-second preview clip. Full-length track available on official streaming platform."
         >
-          Preview (30s)
+          30s Preview
         </span>
       );
   }

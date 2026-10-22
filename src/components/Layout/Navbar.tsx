@@ -12,6 +12,7 @@ import {
 import { useLibrary } from '../../context/LibraryContext';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { LANGUAGES } from '../../data/languages';
+import { MusicService } from '../../services/MusicService';
 
 interface NavbarProps {
   onOpenSettings: () => void;
@@ -23,10 +24,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
   const { preferredLanguages } = useLibrary();
   const { isAdmin } = useAdminAuth();
   const [quickQuery, setQuickQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  React.useEffect(() => {
+    if (quickQuery.trim().length > 1) {
+      MusicService.getSearchSuggestions(quickQuery.trim(), 5).then((items) => {
+        setSuggestions(items);
+      });
+    } else {
+      setSuggestions([]);
+    }
+  }, [quickQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (quickQuery.trim()) {
+      setShowSuggestions(false);
       navigate(`/search?q=${encodeURIComponent(quickQuery.trim())}`);
     }
   };
@@ -71,16 +85,48 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings }) => {
 
         {/* Global Quick Search */}
         {!isSearchPage && (
-          <form onSubmit={handleSearchSubmit} className="relative flex-1">
-            <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <input
-              type="text"
-              placeholder="What do you want to play?"
-              value={quickQuery}
-              onChange={(e) => setQuickQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-full bg-[#141620] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-400 focus:outline-none focus:border-emerald-500/50 focus:bg-[#181a26] transition-all"
-            />
-          </form>
+          <div className="relative flex-1">
+            <form onSubmit={handleSearchSubmit} className="relative w-full">
+              <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <input
+                type="text"
+                placeholder="What do you want to play?"
+                value={quickQuery}
+                onFocus={() => setShowSuggestions(true)}
+                onChange={(e) => {
+                  setQuickQuery(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                className="w-full pl-10 pr-4 py-2 rounded-full bg-[#141620] border border-white/10 text-xs sm:text-sm text-white placeholder-zinc-400 focus:outline-none focus:border-emerald-500/50 focus:bg-[#181a26] transition-all"
+              />
+            </form>
+
+            {/* Suggestions Dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setShowSuggestions(false)}
+                />
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#12141e] border border-white/10 rounded-2xl shadow-2xl z-30 overflow-hidden py-1.5 divide-y divide-white/5">
+                  {suggestions.map((s, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setShowSuggestions(false);
+                        navigate(`/search?q=${encodeURIComponent(s)}`);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3.5 py-2 text-left text-xs text-zinc-200 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                    >
+                      <SearchIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="truncate">{s}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 

@@ -11,6 +11,8 @@ import { AddToPlaylistModal } from '../Modals/AddToPlaylistModal';
 import { SettingsModal } from '../Modals/SettingsModal';
 import { AdminLoginModal } from '../Modals/AdminLoginModal';
 import { PodcastEpisodesModal } from '../Modals/PodcastEpisodesModal';
+import { YouTubeEmbedModal } from '../Player/YouTubeEmbedModal';
+import { PlaylistImporterModal } from '../Modals/PlaylistImporterModal';
 import { usePlayer } from '../../context/PlayerContext';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import type { Track, Podcast } from '../../types';
@@ -20,10 +22,12 @@ export const AppLayout: React.FC = () => {
   const { isAdmin } = useAdminAuth();
 
   const [isCreatePlaylistOpen, setIsCreatePlaylistOpen] = useState(false);
+  const [isPlaylistImporterOpen, setIsPlaylistImporterOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [addToPlaylistTrack, setAddToPlaylistTrack] = useState<Track | null>(null);
   const [selectedPodcast, setSelectedPodcast] = useState<Podcast | null>(null);
+  const [youTubeTrack, setYouTubeTrack] = useState<Track | null>(null);
 
   const handleOpenSettings = () => {
     if (isAdmin) {
@@ -57,6 +61,8 @@ export const AppLayout: React.FC = () => {
               onOpenAddToPlaylist: (track: Track) => setAddToPlaylistTrack(track),
               onSelectPodcast: (podcast: Podcast) => setSelectedPodcast(podcast),
               onOpenCreatePlaylist: () => setIsCreatePlaylistOpen(true),
+              onOpenPlaylistImporter: () => setIsPlaylistImporterOpen(true),
+              onOpenYouTubeEmbed: (track: Track) => setYouTubeTrack(track),
               onOpenSettings: handleOpenSettings,
             }}
           />
@@ -67,18 +73,28 @@ export const AppLayout: React.FC = () => {
       <BottomNav />
 
       {/* Persistent Bottom Audio Player */}
-      <PersistentPlayer />
+      <PersistentPlayer onOpenYouTubeEmbed={(track) => setYouTubeTrack(track)} />
 
       {/* Sliding Queue Drawer */}
       <QueueDrawer />
 
       {/* Immersive Now Playing Modal */}
-      <NowPlayingModal />
+      <NowPlayingModal onOpenYouTubeEmbed={(track) => setYouTubeTrack(track)} />
 
       {/* Modals */}
       <CreatePlaylistModal
         isOpen={isCreatePlaylistOpen}
         onClose={() => setIsCreatePlaylistOpen(false)}
+      />
+
+      <PlaylistImporterModal
+        isOpen={isPlaylistImporterOpen}
+        onClose={() => setIsPlaylistImporterOpen(false)}
+      />
+
+      <YouTubeEmbedModal
+        track={youTubeTrack}
+        onClose={() => setYouTubeTrack(null)}
       />
 
       <AddToPlaylistModal

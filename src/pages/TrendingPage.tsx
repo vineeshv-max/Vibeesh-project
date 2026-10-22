@@ -68,7 +68,7 @@ export const TrendingPage: React.FC = () => {
             Trending Charts
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 max-w-xl">
-            Ranked popular tracks with preview streaming and high-definition album artwork.
+            Ranked popular tracks featuring full-length Creative Commons music and official previews with full streaming options.
           </p>
         </div>
 

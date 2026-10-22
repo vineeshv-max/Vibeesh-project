@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useOutletContext, useNavigate } from 'react-router-dom';
-import { Play, Pause, ArrowLeft } from 'lucide-react';
+import { Play, Pause, ArrowLeft, ExternalLink } from 'lucide-react';
 import { ITunesProvider } from '../services/iTunesProvider';
 import type { Track } from '../types';
 import { TrackRow } from '../components/Cards/TrackRow';
@@ -101,7 +101,7 @@ export const AlbumDetailPage: React.FC = () => {
             )}
           </div>
 
-          <div className="pt-2 flex justify-center sm:justify-start">
+          <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-3">
             <button
               onClick={handlePlayAlbum}
               disabled={tracks.length === 0}
@@ -112,8 +112,19 @@ export const AlbumDetailPage: React.FC = () => {
               ) : (
                 <Play className="w-5 h-5 fill-current ml-0.5" />
               )}
-              {isPlayingThisAlbum ? 'Pause' : 'Play Album'}
+              {isPlayingThisAlbum ? 'Pause' : 'Play Previews'}
             </button>
+            {firstTrack?.originalUrl && (
+              <a
+                href={firstTrack.originalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-5 py-3 rounded-full bg-white/10 hover:bg-white/15 text-white font-semibold text-sm backdrop-blur transition-all hover:scale-105"
+              >
+                <span>Full Album on Apple Music</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
           </div>
         </div>
       </div>

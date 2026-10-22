@@ -11,6 +11,7 @@ import {
   Music,
   Check,
   Globe2,
+  Download,
 } from 'lucide-react';
 import { useLibrary } from '../context/LibraryContext';
 import { usePlayer } from '../context/PlayerContext';
@@ -22,6 +23,8 @@ import { LANGUAGES } from '../data/languages';
 interface OutletContextType {
   onOpenAddToPlaylist: (track: Track) => void;
   onOpenCreatePlaylist: () => void;
+  onOpenPlaylistImporter: () => void;
+  onOpenYouTubeEmbed: (track: Track) => void;
 }
 
 type TabType = 'liked' | 'playlists' | 'recent' | 'languages';
@@ -32,7 +35,8 @@ export const LibraryPage: React.FC = () => {
   const playlistIdParam = searchParams.get('playlistId');
 
   const navigate = useNavigate();
-  const { onOpenAddToPlaylist, onOpenCreatePlaylist } = useOutletContext<OutletContextType>();
+  const { onOpenAddToPlaylist, onOpenCreatePlaylist, onOpenPlaylistImporter } =
+    useOutletContext<OutletContextType>();
   const {
     likedTracks,
     playlists,
@@ -105,13 +109,24 @@ export const LibraryPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={onOpenCreatePlaylist}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs sm:text-sm transition-all hover:scale-105 active:scale-95 shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Create Playlist
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={onOpenPlaylistImporter}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-white font-semibold text-xs sm:text-sm transition-all hover:scale-105 active:scale-95 shrink-0 border border-white/10"
+            title="Import playlist from Spotify, Apple Music, JioSaavn, or YouTube Music"
+          >
+            <Download className="w-4 h-4 text-emerald-400" />
+            <span>Import Playlist</span>
+          </button>
+
+          <button
+            onClick={onOpenCreatePlaylist}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-xs sm:text-sm transition-all hover:scale-105 active:scale-95 shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Playlist</span>
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
